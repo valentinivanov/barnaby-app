@@ -1,0 +1,59 @@
+load("//tools:package.bzl", "barnaby_windows_portable_zip", "gitboard_dist")
+
+package(default_visibility = ["//visibility:public"])
+
+config_setting(
+    name = "macos",
+    constraint_values = ["@platforms//os:macos"],
+)
+
+config_setting(
+    name = "linux",
+    constraint_values = ["@platforms//os:linux"],
+)
+
+config_setting(
+    name = "windows",
+    constraint_values = ["@platforms//os:windows"],
+)
+
+exports_files([
+    "config/statuses.json",
+    "packaging/icons/app_icon.ico",
+    "packaging/icons/app_icon_128x128.png",
+    "packaging/icons/app_icon_256x256.png",
+    "scripts/package_linux_appimage.sh",
+    "scripts/package_linux_flatpack.sh",
+    "scripts/package_windows.ps1",
+    "scripts/restart_barnaby.sh",
+])
+
+filegroup(
+    name = "barnaby_app_icons",
+    srcs = glob(["packaging/icons/Barnaby.xcassets/AppIcon.appiconset/**"]),
+)
+
+gitboard_dist(
+    name = "gitboard_dist",
+    gitboard = "//src:gitboard",
+    restart_script = "scripts/restart_barnaby.sh",
+    server = "//src:gitboard-server",
+    statuses = "config/statuses.json",
+)
+
+alias(
+    name = "barnaby_app",
+    actual = select({
+        ":macos": "//src:Barnaby",
+        ":linux": "//src:BarnabyLinux",
+        ":windows": "//src/windows:BarnabyWindows",
+    }),
+)
+
+barnaby_windows_portable_zip(
+    name = "barnaby_windows_portable",
+    app = "//src/windows:BarnabyWindows",
+    gitboard = "//src:gitboard",
+    server = "//src:gitboard-server",
+    statuses = "config/statuses.json",
+)

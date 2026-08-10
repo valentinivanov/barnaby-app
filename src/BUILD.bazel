@@ -1,0 +1,293 @@
+load("@rules_apple//apple:apple.bzl", "apple_universal_binary")
+load("@rules_apple//apple:macos.bzl", "macos_application")
+load("@rules_apple//apple:versioning.bzl", "apple_bundle_version")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+
+exports_files([
+    "macos/Info.plist",
+])
+
+config_setting(
+    name = "macos",
+    constraint_values = ["@platforms//os:macos"],
+)
+
+config_setting(
+    name = "linux",
+    constraint_values = ["@platforms//os:linux"],
+)
+
+config_setting(
+    name = "windows",
+    constraint_values = ["@platforms//os:windows"],
+)
+
+COMMON_COPTS = select({
+    ":windows": [
+        "/std:c++17",
+        "/W4",
+    ],
+    "//conditions:default": [
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+    ],
+})
+
+filegroup(
+    name = "server_asset_files",
+    srcs = glob(["server/assets/**"]),
+)
+
+genrule(
+    name = "generated_assets",
+    srcs = [":server_asset_files"],
+    outs = ["server/assets.cc"],
+    cmd = "bash $(location server/generate_assets.sh) $@ $(SRCS)",
+    cmd_bat = "powershell -NoProfile -ExecutionPolicy Bypass -File $(location server/generate_assets.ps1) $@ $(SRCS)",
+    tools = [
+        "server/generate_assets.ps1",
+        "server/generate_assets.sh",
+    ],
+)
+
+cc_library(
+    name = "core_test_lib",
+    srcs = [
+        "core/base64.cc",
+        "core/filesystem.cc",
+        "core/json.cc",
+        "core/status_config.cc",
+        "core/strings.cc",
+        "core/subprocess.cc",
+        "core/task.cc",
+        "core/time.cc",
+    ],
+    hdrs = [
+        "core/base64.h",
+        "core/error.h",
+        "core/filesystem.h",
+        "core/json.h",
+        "core/status_config.h",
+        "core/strings.h",
+        "core/subprocess.h",
+        "core/task.h",
+        "core/time.h",
+    ],
+    copts = COMMON_COPTS,
+    visibility = ["//tests:__pkg__"],
+)
+
+cc_library(
+    name = "server_process_test_lib",
+    srcs = ["server/process.cc"],
+    hdrs = ["server/process.h"],
+    copts = COMMON_COPTS,
+    deps = [":core_test_lib"],
+    visibility = ["//tests:__pkg__"],
+)
+
+cc_library(
+    name = "server_config_test_lib",
+    srcs = ["server/config.cc"],
+    hdrs = ["server/config.h"],
+    copts = COMMON_COPTS,
+    deps = [
+        ":core_test_lib",
+        ":server_process_test_lib",
+    ] + select({
+        ":linux": ["@local_libsecret//:libsecret"],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        ":macos": [
+            "-framework",
+            "CoreFoundation",
+            "-framework",
+            "Security",
+        ],
+        ":windows": [
+            "advapi32.lib",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//tests:__pkg__"],
+)
+
+cc_binary(
+    name = "gitboard",
+    srcs = [
+        "commands/commands.cc",
+        "commands/commands.h",
+        "commands/context.h",
+        "core/base64.cc",
+        "core/base64.h",
+        "core/error.h",
+        "core/filesystem.cc",
+        "core/filesystem.h",
+        "core/json.cc",
+        "core/json.h",
+        "core/status_config.cc",
+        "core/status_config.h",
+        "core/strings.cc",
+        "core/strings.h",
+        "core/subprocess.cc",
+        "core/subprocess.h",
+        "core/task.cc",
+        "core/task.h",
+        "core/task_store.cc",
+        "core/task_store.h",
+        "core/time.cc",
+        "core/time.h",
+        "core/user.cc",
+        "core/user.h",
+        "main.cc",
+    ],
+    copts = COMMON_COPTS,
+    data = ["//:config/statuses.json"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "gitboard-server",
+    srcs = [
+        "core/base64.cc",
+        "core/base64.h",
+        "core/error.h",
+        "core/filesystem.cc",
+        "core/filesystem.h",
+        "core/json.cc",
+        "core/json.h",
+        "core/strings.cc",
+        "core/strings.h",
+        "core/user.cc",
+        "core/user.h",
+        "server/ai_agent_anthropic.cc",
+        "server/ai_agent_anthropic.h",
+        "server/ai_agent.cc",
+        "server/ai_agent.h",
+        "server/ai_agent_openai.cc",
+        "server/ai_agent_openai.h",
+        "server/app.cc",
+        "server/app.h",
+        "server/assets.h",
+        "server/config.cc",
+        "server/config.h",
+        "server/engine.cc",
+        "server/engine.h",
+        "server/http.cc",
+        "server/http.h",
+        "server/ai_http_client.cc",
+        "server/ai_http_client.h",
+        "server/main.cc",
+        "server/process.cc",
+        "server/process.h",
+        ":generated_assets",
+    ],
+    copts = COMMON_COPTS,
+    linkopts = select({
+        ":macos": [
+            "-framework",
+            "CoreFoundation",
+            "-framework",
+            "Security",
+        ],
+        ":windows": [
+            "advapi32.lib",
+            "ole32.lib",
+            "shell32.lib",
+            "uuid.lib",
+            "ws2_32.lib",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "@local_libcurl//:libcurl",
+    ] + select({
+        ":linux": ["@local_libsecret//:libsecret"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "BarnabyLinux",
+    actual = "//src/linux:BarnabyLinux",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "BarnabyWindows",
+    actual = "//src/windows:BarnabyWindows",
+    visibility = ["//visibility:public"],
+)
+
+apple_universal_binary(
+    name = "gitboard_universal",
+    binary = ":gitboard",
+    forced_cpus = [
+        "x86_64",
+        "arm64",
+    ],
+    minimum_os_version = "12.0",
+    platform_type = "macos",
+)
+
+apple_universal_binary(
+    name = "gitboard_server_universal",
+    binary = ":gitboard-server",
+    forced_cpus = [
+        "x86_64",
+        "arm64",
+    ],
+    minimum_os_version = "12.0",
+    platform_type = "macos",
+)
+
+objc_library(
+    name = "barnaby_app_sources",
+    srcs = [
+        "macos/BarnabyApp.mm",
+    ],
+    copts = [
+        "-fobjc-arc",
+        "-Wall",
+        "-Wextra",
+    ],
+    sdk_frameworks = [
+        "Cocoa",
+        "WebKit",
+    ],
+)
+
+apple_bundle_version(
+    name = "barnaby_app_version",
+    build_version = "1",
+    short_version_string = "0.4.2",
+)
+
+macos_application(
+    name = "Barnaby",
+    app_icons = [
+        "//:barnaby_app_icons",
+    ],
+    bundle_id = "dev.gitboard.barnaby",
+    bundle_name = "Barnaby",
+    executable_name = "Barnaby",
+    infoplists = [
+        "macos/Info.plist",
+    ],
+    minimum_os_version = "12.0",
+    resources = [
+        ":gitboard_server_universal",
+        ":gitboard_universal",
+    ],
+    version = ":barnaby_app_version",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":barnaby_app_sources",
+    ],
+)

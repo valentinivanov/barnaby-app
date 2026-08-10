@@ -1,0 +1,116 @@
+app-id: dev.gitboard.barnaby
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: Barnaby
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --talk-name=org.freedesktop.secrets
+  # Barnaby is a local development tool; repository access may be narrowed later.
+  - --filesystem=home
+
+modules:
+  - name: git
+    buildsystem: simple
+    build-commands:
+      - >-
+        make -j${FLATPAK_BUILDER_N_JOBS}
+        prefix=/app
+        NO_TCLTK=YesPlease
+        NO_GETTEXT=YesPlease
+        NO_PERL=YesPlease
+        NO_PYTHON=YesPlease
+        NO_INSTALL_HARDLINKS=YesPlease
+        all
+      - >-
+        make
+        prefix=/app
+        NO_TCLTK=YesPlease
+        NO_GETTEXT=YesPlease
+        NO_PERL=YesPlease
+        NO_PYTHON=YesPlease
+        NO_INSTALL_HARDLINKS=YesPlease
+        install
+    sources:
+      - type: archive
+        url: https://www.kernel.org/pub/software/scm/git/git-2.54.0.tar.xz
+        sha256: f689162364c10de79ef89aa8dbf48731eb057e34edbbd20aca510ce0154681a3
+
+  - name: barnaby
+    buildsystem: simple
+    build-commands:
+      - mkdir -p build
+      - >-
+        bash src/server/generate_assets.sh build/assets.cc
+        src/server/assets/app.css
+        src/server/assets/app.js
+        src/server/assets/index.html
+        src/server/assets/agent_pip.png
+        src/server/assets/app_icon_128x128.png
+      - >-
+        c++ -std=c++17 -O2 -DNDEBUG -Wall -Wextra -pedantic -I.
+        -o build/gitboard
+        src/commands/commands.cc
+        src/core/base64.cc
+        src/core/filesystem.cc
+        src/core/json.cc
+        src/core/status_config.cc
+        src/core/strings.cc
+        src/core/subprocess.cc
+        src/core/task.cc
+        src/core/task_store.cc
+        src/core/time.cc
+        src/core/user.cc
+        src/main.cc
+      - >-
+        c++ -std=c++17 -O2 -DNDEBUG -Wall -Wextra -pedantic -pthread -I.
+        $(pkg-config --cflags libcurl libsecret-1)
+        -o build/gitboard-server
+        src/core/base64.cc
+        src/core/filesystem.cc
+        src/core/json.cc
+        src/core/strings.cc
+        src/core/user.cc
+        src/server/ai_agent_anthropic.cc
+        src/server/ai_agent.cc
+        src/server/ai_agent_openai.cc
+        src/server/ai_http_client.cc
+        src/server/app.cc
+        src/server/config.cc
+        src/server/engine.cc
+        src/server/http.cc
+        src/server/main.cc
+        src/server/process.cc
+        build/assets.cc
+        $(pkg-config --libs libcurl libsecret-1)
+      - bash packaging/linux/build_barnaby_cef.sh
+      - install -Dm755 build/Barnaby /app/bin/Barnaby
+      - install -Dm755 build/gitboard /app/lib/barnaby/gitboard
+      - install -Dm755 build/gitboard-server /app/lib/barnaby/gitboard-server
+      - mkdir -p /app/lib/barnaby/cef
+      - cp -a cef/Release/. /app/lib/barnaby/cef/
+      - cp -a cef/Resources/. /app/lib/barnaby/cef/
+      - install -Dm644 packaging/linux/dev.gitboard.barnaby.desktop /app/share/applications/dev.gitboard.barnaby.desktop
+      - install -Dm644 packaging/linux/dev.gitboard.barnaby.metainfo.xml /app/share/metainfo/dev.gitboard.barnaby.metainfo.xml
+      - install -Dm644 packaging/icons/app_icon.svg /app/share/icons/hicolor/scalable/apps/dev.gitboard.barnaby.svg
+      - install -Dm644 packaging/icons/app_icon_128x128.png /app/share/icons/hicolor/128x128/apps/dev.gitboard.barnaby.png
+      - install -Dm644 packaging/icons/app_icon_256x256.png /app/share/icons/hicolor/256x256/apps/dev.gitboard.barnaby.png
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .flatpak-builder
+          - build-flatpak
+          - repo
+          - bazel-*
+          - .git
+      - type: archive
+        url: https://cef-builds.spotifycdn.com/cef_binary_149.0.6%2Bg0d0eeb6%2Bchromium-149.0.7827.201_linux64_minimal.tar.bz2
+        sha256: f90dec4c5c42a7bbd4f2bd80a7a77e0ac6aacfc6627bb43572d803e77f26dfbc
+        dest: cef
+        strip-components: 1

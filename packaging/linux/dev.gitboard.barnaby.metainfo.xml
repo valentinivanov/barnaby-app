@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.gitboard.barnaby</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>Barnaby</name>
+  <summary>Manage project tasks stored in Git repositories</summary>
+  <developer id="dev.gitboard">
+    <name>Valentyn Ivanov</name>
+  </developer>
+
+  <description>
+    <p>
+      Barnaby is a desktop task board backed by files in local Git repositories.
+      It provides an embedded web interface for viewing and managing project
+      tasks.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">dev.gitboard.barnaby.desktop</launchable>
+
+  <url type="homepage">https://github.com/valentinivanov/gitboard-cpp</url>
+  <url type="bugtracker">https://github.com/valentinivanov/gitboard-cpp/issues</url>
+
+  <releases>
+    <release version="0.4.2" date="2026-08-07"/>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

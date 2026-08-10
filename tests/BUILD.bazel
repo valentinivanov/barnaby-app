@@ -1,0 +1,102 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+config_setting(
+    name = "run_positive_tests",
+    values = {"define": "run_tests=true"},
+)
+
+config_setting(
+    name = "windows",
+    constraint_values = ["@platforms//os:windows"],
+)
+
+TEST_COPTS = select({
+    ":windows": [
+        "/std:c++17",
+        "/W4",
+    ],
+    "//conditions:default": [
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+    ],
+})
+
+cc_test(
+    name = "smoke_test",
+    srcs = ["smoke_test.cc"],
+    copts = TEST_COPTS,
+)
+
+cc_test(
+    name = "core_phase1_test",
+    srcs = ["core_phase1_test.cc"],
+    copts = TEST_COPTS,
+    data = ["//:config/statuses.json"],
+    deps = ["//src:core_test_lib"],
+)
+
+cc_test(
+    name = "core_phase2_test",
+    srcs = ["core_phase2_test.cc"],
+    copts = TEST_COPTS,
+    deps = ["//src:core_test_lib"],
+)
+
+cc_test(
+    name = "server_phase3_test",
+    srcs = ["server_phase3_test.cc"],
+    copts = TEST_COPTS,
+    deps = ["//src:server_process_test_lib"],
+)
+
+cc_test(
+    name = "server_ai_config_test",
+    srcs = ["server_ai_config_test.cc"],
+    copts = TEST_COPTS,
+    deps = ["//src:server_config_test_lib"],
+)
+
+cc_test(
+    name = "server_startup_test",
+    srcs = ["server_startup_test.cc"],
+    copts = TEST_COPTS,
+    args = [
+        "$(location //src:gitboard-server)",
+        "$(location //src:gitboard)",
+    ],
+    data = [
+        "//src:gitboard",
+        "//src:gitboard-server",
+    ],
+    linkopts = select({
+        ":windows": ["ws2_32.lib"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_test(
+    name = "core_phase4_test",
+    srcs = ["core_phase4_test.cc"],
+    copts = TEST_COPTS,
+    deps = ["//src:core_test_lib"],
+)
+
+cc_binary(
+    name = "positive_test",
+    srcs = ["positive_test.cc"],
+    copts = TEST_COPTS,
+)
+
+genrule(
+    name = "positive_test_run",
+    srcs = ["//src:gitboard"],
+    outs = ["positive_test_run.txt"],
+    tools = [":positive_test"],
+    cmd = select({
+        ":run_positive_tests": "$(location :positive_test) $(location //src:gitboard) > $@",
+        "//conditions:default": "echo 'positive tests skipped; pass --define=run_tests=true to run them' > $@",
+    }),
+)

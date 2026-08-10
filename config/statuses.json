@@ -1,0 +1,38 @@
+{
+  "backlog": {
+    "order": 0,
+    "display": "Backlog",
+    "transitions": []
+  },
+  "todo": {
+    "order": 1,
+    "display": "To Do",
+    "transitions": []
+  },
+  "in_progress": {
+    "order": 2,
+    "display": "In Progress",
+    "transitions": []
+  },
+  "review": {
+    "order": 3,
+    "display": "Review",
+    "transitions": []
+  },
+  "done": {
+    "order": 4,
+    "display": "Done",
+    "transitions": []
+  },
+  "released": {
+    "order": 5,
+    "display": "Released",
+    "transitions": []
+  },
+  "archived": {
+    "order": 6,
+    "display": "Archived",
+    "transitions": [],
+    "visible": false
+  }
+}

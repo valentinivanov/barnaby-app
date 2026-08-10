@@ -1,0 +1,18 @@
+module(name = "gitboard_cpp", version = "0.4.2")
+
+bazel_dep(name = "apple_support", version = "2.5.4")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_apple", version = "4.5.3")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+
+curl_config = use_extension("//tools:curl_config.bzl", "curl_config")
+use_repo(curl_config, "local_libcurl")
+
+libsecret_config = use_extension("//tools:libsecret_config.bzl", "libsecret_config")
+use_repo(libsecret_config, "local_libsecret")
+
+cef_config = use_extension("//tools:cef_config.bzl", "cef_config")
+use_repo(cef_config, "local_cef")
+
+linux_splash_config = use_extension("//tools:linux_splash_config.bzl", "linux_splash_config")
+use_repo(linux_splash_config, "local_linux_splash")

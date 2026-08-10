@@ -1,0 +1,26 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+cc_binary(
+    name = "BarnabyLinux",
+    srcs = ["BarnabyCef.cc"],
+    copts = [
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-parameter",
+        "-pedantic",
+    ],
+    data = [
+        "@local_cef//:runtime_files",
+        "//:packaging/icons/app_icon_128x128.png",
+        "//:packaging/icons/app_icon_256x256.png",
+        "//src:gitboard",
+        "//src:gitboard-server",
+    ],
+    deps = [
+        "@local_cef//:cef",
+        "@local_linux_splash//:linux_splash",
+    ],
+    visibility = ["//visibility:public"],
+)

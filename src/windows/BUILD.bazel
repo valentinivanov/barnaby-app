@@ -1,0 +1,63 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+genrule(
+    name = "barnaby_windows_resources",
+    srcs = [
+        "BarnabyWin.rc",
+        "resource.h",
+        "//:packaging/icons/app_icon.ico",
+    ],
+    outs = ["BarnabyWin.res"],
+    cmd = "touch $@",
+    cmd_bat = "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$$rc = Get-ChildItem 'C:\\Program Files (x86)\\Windows Kits\\10\\bin\\*\\x64\\rc.exe' | Sort-Object FullName -Descending | Select-Object -First 1; if (!$$rc) { throw 'rc.exe not found in Windows Kits' }; & $$rc.FullName /nologo /fo'$@' '$(location BarnabyWin.rc)'\"",
+)
+
+cc_binary(
+    name = "BarnabyWindows",
+    additional_linker_inputs = [":barnaby_windows_resources"],
+    srcs = [
+        "BarnabyWin.cc",
+        "resource.h",
+    ],
+    copts = [
+        "/std:c++20",
+        "/W4",
+    ],
+    data = [
+        "@local_cef//:runtime_files",
+        "//src:gitboard",
+        "//src:gitboard-server",
+    ],
+    defines = [
+        "UNICODE",
+        "WINVER=0x0A00",
+        "_UNICODE",
+        "_WIN32_WINNT=0x0A00",
+    ],
+    linkopts = [
+        "comctl32.lib",
+        "delayimp.lib",
+        "/DELAYLOAD:libcef.dll",
+        "gdi32.lib",
+        "imm32.lib",
+        "ole32.lib",
+        "oleaut32.lib",
+        "propsys.lib",
+        "psapi.lib",
+        "rpcrt4.lib",
+        "shell32.lib",
+        "shlwapi.lib",
+        "user32.lib",
+        "userenv.lib",
+        "usp10.lib",
+        "uuid.lib",
+        "version.lib",
+        "wininet.lib",
+        "winmm.lib",
+        "ws2_32.lib",
+        "$(location :barnaby_windows_resources)",
+        "/SUBSYSTEM:WINDOWS",
+    ],
+    deps = ["@local_cef//:cef"],
+    visibility = ["//visibility:public"],
+)

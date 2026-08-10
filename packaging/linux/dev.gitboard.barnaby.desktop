@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Barnaby
+GenericName=Task Board
+Comment=Manage project tasks stored in Git repositories
+Exec=Barnaby
+Icon=dev.gitboard.barnaby
+Terminal=false
+Categories=Development;ProjectManagement;
+StartupNotify=true
