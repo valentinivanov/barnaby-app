@@ -48,6 +48,9 @@ The project is built around three pieces:
   and help draft project documentation while working against the same local
   task data.
 
+## Running
+Barnaby assumes there is Git CLI available in the PATH. Otherwise it has no additional dependencies.
+
 ## Building
 
 Barnaby uses Bazel for C++ builds. The main development targets are:
