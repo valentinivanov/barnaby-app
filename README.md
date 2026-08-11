@@ -1,5 +1,7 @@
 # Barnaby
 
+![Barnaby and Pip](https://github.com/valentinivanov/barnaby-app/blob/main/doc/agent_pip_and_barnaby_the_task_engine_forest.png)
+
 Barnaby is a local-first desktop task board for projects that already live in
 Git. It stores tasks as Markdown files with structured front matter, keeps task
 history reviewable through normal Git workflows, and provides a small local web
