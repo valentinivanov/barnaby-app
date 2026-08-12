@@ -54,6 +54,11 @@ The project is built around three pieces:
 
 ## Running
 Barnaby assumes there is Git CLI available in the PATH. Otherwise it has no additional dependencies.
+Just download proper redistributable from the release page, clone the Barnaby repo and open it in Barnaby. I use dog food approach so Barnaby helps to develop itself.
+
+You may need to edit team.json file to add team members. The default file contains only agent Pip. 
+You may add additional entries in the same format. 
+If you have activated agent Pip you may ask him to add new team members. Team editing UI is WIP currently.
 
 ## Building
 
