@@ -14,6 +14,8 @@ The project is built around three pieces:
 - `Barnaby`: the desktop wrapper that launches the local server and displays the
   UI in a native app window.
 
+  [![Barnaby and Pip Demo](https://github.com/valentinivanov/barnaby-app/blob/main/doc/video_frame.png)](https://youtu.be/D95_pLAniOU?si=RV23hMIdtrwG8V4x "Barnaby demo")
+
 ## Goals
 
 - Keep project tasks portable, inspectable, and version-controlled.
